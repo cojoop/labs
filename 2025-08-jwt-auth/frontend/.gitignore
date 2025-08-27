@@ -1,4 +1,6 @@
+# -----------------------------
 # Logs
+# -----------------------------
 logs
 *.log
 npm-debug.log*
@@ -7,19 +9,52 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# -----------------------------
+# Build artifacts
+# -----------------------------
 coverage
-node_modules
 dist
 dist-ssr
-*.local
 
+# -----------------------------
+# Dependencies
+# -----------------------------
+node_modules
+
+# -----------------------------
+# Local env/config
+# -----------------------------
+*.local
+.env
+.env.local
+.env.*.local
+
+# -----------------------------
 # Editor directories and files
+# -----------------------------
 .vscode/*
 !.vscode/extensions.json
-.idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# -----------------------------
+# Docker
+# -----------------------------
+*.pid
+*.tar
+*.tgz
+data/
+volumes/
+tmp/
+.devcontainer/
+docker-compose.override.yml
+
+# -----------------------------
+# Misc
+# -----------------------------
+.cache/
+.parcel-cache/
