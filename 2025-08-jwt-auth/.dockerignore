@@ -7,6 +7,15 @@ backend/out
 backend/.gradle
 
 # -----------------------------
+# Keep Gradle wrapper (important)
+# -----------------------------
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.properties
+!backend/gradlew
+!backend/build.gradle
+!backend/settings.gradle
+
+# -----------------------------
 # Node dependencies & outputs
 # -----------------------------
 frontend/node_modules
