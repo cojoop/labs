@@ -1,29 +1,32 @@
 # ---------- Build stage ----------
-FROM node:20-alpine AS builder
-WORKDIR /app
+FROM node:20-alpine AS build
 
 # pnpm 활성화
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# 캐시 최적화
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm fetch
+WORKDIR /app
 
-# 소스 복사 후 오프라인 설치 + 빌드
-COPY . .
-RUN pnpm install --offline --frozen-lockfile
-RUN pnpm build   # (= pnpm run build)
+# lockfile 기반 의존성 설치 (캐시 최적화)
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml* ./
+RUN pnpm install --frozen-lockfile
+
+# 소스 복사 및 빌드
+COPY frontend/. .
+RUN pnpm build
 
 # ---------- Runtime stage ----------
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
+FROM nginx:1.27-alpine
 
-# 경량 정적 서버 설치
-RUN npm i -g serve
+# 기본 html 삭제 후 새 빌드 결과 복사
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# 빌드 산출물만 복사
-COPY --from=builder /app/dist ./dist
+# 커스텀 nginx.conf 있으면 반영
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 3000
-CMD ["serve", "-s", "dist", "-l", "3000"]
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -qO- http://127.0.0.1/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

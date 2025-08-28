@@ -1,0 +1,52 @@
+services:
+  jwt-frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    image: jwt-frontend
+    expose:
+      - "80"
+    networks:
+      - proxy-net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy-net
+
+      # labs.cojoop.kro.kr/jwt -> 프론트
+      - traefik.http.routers.jwtweb.rule=Host(`labs.cojoop.kro.kr`) && PathPrefix(`/jwt`)
+      - traefik.http.routers.jwtweb.entrypoints=websecure
+      - traefik.http.routers.jwtweb.tls.certresolver=le
+      - traefik.http.services.jwtweb.loadbalancer.server.port=80
+
+      # /jwt 접두어 제거 후 백엔드로 전달
+      - traefik.http.middlewares.jwtweb-stripprefix.stripprefix.prefixes=/jwt
+      - traefik.http.routers.jwtweb.middlewares=jwtweb-stripprefix
+
+  jwt-backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    image: jwt-backend
+    expose:
+      - "8080"
+    networks:
+      - proxy-net
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy-net
+
+      # labs.cojoop.kro.kr/jwt/api -> 백엔드
+      - traefik.http.routers.jwtapi.rule=Host(`labs.cojoop.kro.kr`) && PathPrefix(`/jwt/api`)
+      - traefik.http.routers.jwtapi.entrypoints=websecure
+      - traefik.http.routers.jwtapi.tls.certresolver=le
+      - traefik.http.services.jwtapi.loadbalancer.server.port=8080
+
+      # /jwt/api 접두어 제거
+      - traefik.http.middlewares.jwtapi-stripprefix.stripprefix.prefixes=/jwt/api
+      - traefik.http.routers.jwtapi.middlewares=jwtapi-stripprefix
+
+networks:
+  proxy-net:
+    external: true
+  infra-net:
+    external: true
