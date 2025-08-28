@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: backend
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    org.springframework: INFO
+
+server:
+  port: 8080
