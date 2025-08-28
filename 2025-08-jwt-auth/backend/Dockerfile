@@ -1,21 +1,19 @@
 # ---------- Build Stage ----------
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM gradle:8.8-jdk21-alpine AS build
 
 WORKDIR /workspace
 
-COPY backend/gradlew backend/settings.gradle* backend/build.gradle* backend/gradle ./
-RUN chmod +x gradlew
-RUN ./gradlew --no-daemon dependencies || true
-
+COPY backend/build.gradle* backend/settings.gradle* ./
 COPY backend/src ./src
-RUN ./gradlew --no-daemon clean bootJar -x test
+
+RUN gradle --no-daemon clean bootJar -x test
 
 # ---------- Runtime Stage ----------
-FROM eclipse-temurin:21-jre-alpine AS runner
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /workspace/build/libs/*.jar app.jar
+COPY --from=build /workspace/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
