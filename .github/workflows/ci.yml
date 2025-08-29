@@ -58,15 +58,12 @@ jobs:
         if: contains(join(matrix.services, ','), 'frontend')
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.project }}/frontend
-          file: ${{ matrix.project }}/frontend/Dockerfile
+          context: ./2025-08-jwt-auth/frontend
+          file: ./2025-08-jwt-auth/frontend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.project }}-frontend:latest
-            ghcr.io/${{ github.repository }}/${{ matrix.project }}-frontend:${{ github.sha }}
-          labels: ${{ steps.meta_fe.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository }}/2025-08-jwt-auth-frontend:latest
+            ghcr.io/${{ github.repository }}/2025-08-jwt-auth-frontend:${{ github.sha }}
 
       # ---------- BACKEND ----------
       - name: Docker meta (backend)
@@ -79,12 +76,9 @@ jobs:
         if: contains(join(matrix.services, ','), 'backend')
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.project }}/backend
-          file: ${{ matrix.project }}/backend/Dockerfile
+          context: ./2025-08-jwt-auth/backend
+          file: ./2025-08-jwt-auth/backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.project }}-backend:latest
-            ghcr.io/${{ github.repository }}/${{ matrix.project }}-backend:${{ github.sha }}
-          labels: ${{ steps.meta_be.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository }}/2025-08-jwt-auth-backend:latest
+            ghcr.io/${{ github.repository }}/2025-08-jwt-auth-backend:${{ github.sha }}
