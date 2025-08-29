@@ -1,5 +1,7 @@
 package com.cojoop.labs.jwt.config;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,11 +13,11 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
   @Bean
-  SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain managementChain(HttpSecurity http) throws Exception {
     http
-        .securityMatcher("/actuator/**")
+        .securityMatcher(EndpointRequest.toAnyEndpoint())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+            .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
             .anyRequest().authenticated()
         )
         .httpBasic(Customizer.withDefaults())
