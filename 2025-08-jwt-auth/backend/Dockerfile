@@ -13,11 +13,13 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache curl
+
 COPY --from=build /workspace/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s \
-  CMD wget -qO- http://127.0.0.1:8080/api/healthz | grep -q 'ok' || exit 1
+HEALTHCHECK --interval=15s --timeout=3s --start-period=45s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8081/actuator/health >/dev/null || exit 1
 
 ENTRYPOINT ["java","-jar","app.jar"]
