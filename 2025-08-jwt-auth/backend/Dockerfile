@@ -18,6 +18,6 @@ COPY --from=build /workspace/build/libs/*.jar app.jar
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s \
-  CMD wget -qO- http://127.0.0.1:8080/actuator/health | grep -q '"status":"UP"' || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/api/healthz | grep -q 'ok' || exit 1
 
 ENTRYPOINT ["java","-jar","app.jar"]
