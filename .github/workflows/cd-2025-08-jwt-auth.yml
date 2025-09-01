@@ -25,9 +25,8 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            set -x  # 디버깅
+            set -x
 
-            # 0) 환경 점검
             docker --version
             docker compose version || true
 
@@ -37,28 +36,28 @@ jobs:
             echo "===== .env 내용(민감값 제외) ====="
             grep -E '^(REGISTRY|PROJECT_NAME)=' .env || true
 
-            # 1) GHCR 로그인
+            # GHCR 로그인
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-            # 2) compose 유효성
+            # <-- 여기서 TAG 설정/내보내기
+            export TAG=${{ github.event.workflow_run.head_sha }}
+
+            # compose 유효성 확인(렌더 결과에 TAG 반영됐는지 확인)
             docker compose config >/tmp/compose.rendered.yml
-            echo "===== compose render summary ====="
             head -n 60 /tmp/compose.rendered.yml || true
 
-            # 3) 이미지 풀 (리트라이)
+            # 이미지 풀 (리트라이)
             for i in 1 2 3; do
               if docker compose pull; then break; fi
               echo "pull retry $i"; sleep 3
             done
 
-            # 4) 기동
-            TAG=${{ github.event.workflow_run.head_sha }} docker compose up -d --remove-orphans
+            # 기동
+            docker compose up -d --remove-orphans
 
-            # 5) 상태 확인 (이름은 compose 서비스명과 동일)
             docker compose ps
             docker compose ls || true
 
-            # 6) 스모크 (실행권한 보장)
             chmod +x ./scripts/smoke_backend.sh ./scripts/smoke_frontend.sh
             ./scripts/smoke_backend.sh
             ./scripts/smoke_frontend.sh
