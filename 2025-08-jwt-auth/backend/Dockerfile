@@ -25,7 +25,7 @@ RUN apk add --no-cache curl
 
 COPY --from=build /workspace/build/libs/*.jar ./app.jar
 
-EXPOSE 8080
+EXPOSE 8080 8081
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=45s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8081/actuator/health >/dev/null || exit 1

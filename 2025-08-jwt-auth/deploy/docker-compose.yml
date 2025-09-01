@@ -35,7 +35,7 @@ services:
       - traefik.http.services.jwtapi.loadbalancer.server.port=8080
       - traefik.http.routers.jwtapi.middlewares=jwt-strip@docker,secure-headers@docker
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8081/actuator/health"]
       interval: 10s
       timeout: 2s
       retries: 6
