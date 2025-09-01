@@ -58,7 +58,7 @@ jobs:
         if: contains(join(matrix.services, ','), 'frontend')
         uses: docker/build-push-action@v6
         with:
-          context: ./2025-08-jwt-auth/frontend
+          context: ./2025-08-jwt-auth
           file: ./2025-08-jwt-auth/frontend/Dockerfile
           push: true
           tags: |
@@ -76,7 +76,7 @@ jobs:
         if: contains(join(matrix.services, ','), 'backend')
         uses: docker/build-push-action@v6
         with:
-          context: ./2025-08-jwt-auth/backend
+          context: ./2025-08-jwt-auth
           file: ./2025-08-jwt-auth/backend/Dockerfile
           push: true
           tags: |

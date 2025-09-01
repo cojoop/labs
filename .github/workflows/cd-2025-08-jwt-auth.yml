@@ -25,10 +25,10 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            cd /srv/docker/labs/2025-08-jwt-auth/deploy/compose
+            cd /srv/docker/labs/2025-08-jwt-auth/deploy
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
             for i in {1..3}; do docker compose pull && break || (echo "pull retry $i" && sleep 3); done
             TAG=${{ github.event.workflow_run.head_sha }} docker compose up -d --remove-orphans
-            bash ../scripts/smoke_backend.sh
-            bash ../scripts/smoke_frontend.sh
+            bash ./scripts/smoke_backend.sh
+            bash ./scripts/smoke_frontend.sh
             docker logout ghcr.io
