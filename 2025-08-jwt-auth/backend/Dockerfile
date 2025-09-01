@@ -1,8 +1,11 @@
 # ---------- Build Stage ----------
 FROM eclipse-temurin:21-jdk-alpine AS build
+
 WORKDIR /workspace
 
-COPY backend/gradlew backend/gradlew.bat backend/gradle ./gradle/
+COPY backend/gradlew ./gradlew
+COPY backend/gradlew.bat ./gradlew.bat
+COPY backend/gradle ./gradle
 COPY backend/build.gradle backend/settings.gradle ./
 
 RUN chmod +x ./gradlew
