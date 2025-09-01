@@ -2,7 +2,7 @@ name: CI - Build & Push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
       - "2025-08-jwt-auth/**"
       - ".github/workflows/ci.yml"
@@ -37,8 +37,12 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -52,14 +56,14 @@ jobs:
         if: contains(join(matrix.services, ','), 'frontend')
         uses: docker/build-push-action@v6
         with:
-          context: ./2025-08-jwt-auth        # ← 프로젝트 루트 컨텍스트(유지)
+          context: ./2025-08-jwt-auth
           file: ./2025-08-jwt-auth/frontend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64   # ★ 추가
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository }}/2025-08-jwt-auth-frontend:latest
             ghcr.io/${{ github.repository }}/2025-08-jwt-auth-frontend:${{ github.sha }}
-          cache-from: type=gha                  # (선택) 캐시
+          cache-from: type=gha
           cache-to: type=gha,mode=max
 
       # --- BACKEND ---
@@ -68,9 +72,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./2025-08-jwt-auth
-          file: ./2[48;58;206;1740;2884t025-08-jwt-auth/backend/Dockerfile
+          file: ./2025-08-jwt-auth/backend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64   # ★ 추가
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository }}/2025-08-jwt-auth-backend:latest
             ghcr.io/${{ github.repository }}/2025-08-jwt-auth-backend:${{ github.sha }}
