@@ -1,4 +1,4 @@
-name: CD - Deploy 2025-08-jwt-auth
+name: CD - 2025-08-jwt-auth
 
 on:
   workflow_run:
@@ -6,8 +6,15 @@ on:
     types: ["completed"]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.run_id }}
-  cancel-in-progress: false
+  group: cd-jwt-auth
+  cancel-in-progress: true
+
+env:
+  DEPLOY_DIR: /srv/docker/labs/2025-08-jwt-auth/deploy
+  PROJECT_NAME: jwt-auth
+  COMPOSE_FILE: docker-compose.yml
+  SMOKE_BACKEND: ./scripts/smoke_backend.sh
+  SMOKE_FRONTEND: ./scripts/smoke_frontend.sh
 
 jobs:
   deploy:
@@ -24,42 +31,50 @@ jobs:
           command_timeout: 30m
           script_stop: true
           script: |
-            set -euo pipefail
-            set -x
+            bash -lc '
+              set -Eeuo pipefail
+              set -x
 
-            docker --version
-            docker compose version || true
+              trap "docker logout ghcr.io || true" EXIT
 
-            cd /srv/docker/labs/2025-08-jwt-auth/deploy || (echo "deploy 디렉터리 없음"; exit 1)
-            test -f docker-compose.yml || (echo "docker-compose.yml 없음"; ls -la; exit 1)
-            test -f .env || (echo ".env 없음 (REGISTRY/PROJECT_NAME 필요)"; exit 1)
-            echo "===== .env 내용(민감값 제외) ====="
-            grep -E '^(REGISTRY|PROJECT_NAME)=' .env || true
+              docker --version
+              docker compose version || true
 
-            # GHCR 로그인
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+              cd "${DEPLOY_DIR}" || (echo "deploy 디렉터리 없음: ${DEPLOY_DIR}"; exit 1)
+              test -f "${COMPOSE_FILE}" || (echo "compose 파일 없음: ${COMPOSE_FILE}"; ls -la; exit 1)
+              test -f .env || (echo ".env 없음 (REGISTRY/PROJECT_NAME 필요)"; exit 1)
+              echo "===== .env 내용(민감값 제외) ====="
+              grep -E "^(REGISTRY|PROJECT_NAME|IMAGE_PREFIX)=" .env || true
 
-            # <-- 여기서 TAG 설정/내보내기
-            export TAG=${{ github.event.workflow_run.head_sha }}
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-            # compose 유효성 확인(렌더 결과에 TAG 반영됐는지 확인)
-            docker compose config >/tmp/compose.rendered.yml
-            head -n 60 /tmp/compose.rendered.yml || true
+              export TAG=${{ github.event.workflow_run.head_sha }}
 
-            # 이미지 풀 (리트라이)
-            for i in 1 2 3; do
-              if docker compose pull; then break; fi
-              echo "pull retry $i"; sleep 3
-            done
+              docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" config > "/tmp/${PROJECT_NAME}.rendered.yml"
+              head -n 60 "/tmp/${PROJECT_NAME}.rendered.yml" || true
 
-            # 기동
-            docker compose up -d --remove-orphans
+              if ! grep -qE "image: .*:${TAG}" "/tmp/${PROJECT_NAME}.rendered.yml"; then
+                echo "ERROR: compose 렌더 결과에 TAG(${TAG})가 반영되지 않았습니다."
+                sed -n "1,200p" "/tmp/${PROJECT_NAME}.rendered.yml"
+                exit 1
+              fi
 
-            docker compose ps
-            docker compose ls || true
+              for i in 1 2 3; do
+                if docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" pull; then
+                  break
+                fi
+                echo "pull retry $i"
+                sleep $((i*i))
+              done
 
-            chmod +x ./scripts/smoke_backend.sh ./scripts/smoke_frontend.sh
-            ./scripts/smoke_backend.sh
-            ./scripts/smoke_frontend.sh
+              docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" up -d --remove-orphans
 
-            docker logout ghcr.io
+              docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" ps
+              docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" ls || true
+
+              test -x "${SMOKE_BACKEND}"  || (echo "smoke_backend.sh 없음/실행권한 없음"; exit 1)
+              test -x "${SMOKE_FRONTEND}" || (echo "smoke_frontend.sh 없음/실행권한 없음"; exit 1)
+
+              "${SMOKE_BACKEND}"
+              "${SMOKE_FRONTEND}"
+            '
