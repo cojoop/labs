@@ -49,11 +49,12 @@ jobs:
               echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
               export TAG=${{ github.event.workflow_run.head_sha }}
+              [ -n "${TAG:-}" ] || { echo "TAG empty"; exit 1; }
 
               docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" config > "/tmp/${PROJECT_NAME}.rendered.yml"
               head -n 60 "/tmp/${PROJECT_NAME}.rendered.yml" || true
 
-              if ! grep -qE "image: .*:${TAG}" "/tmp/${PROJECT_NAME}.rendered.yml"; then
+              if ! grep -qE "image:\s+.+:${TAG}(\s|$)" "/tmp/${PROJECT_NAME}.rendered.yml"; then
                 echo "ERROR: compose 렌더 결과에 TAG(${TAG})가 반영되지 않았습니다."
                 sed -n "1,200p" "/tmp/${PROJECT_NAME}.rendered.yml"
                 exit 1

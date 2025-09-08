@@ -1,6 +1,6 @@
 services:
   jwt-frontend:
-    image: ${IMAGE_PREFIX}-frontend:${TAG:-latest}
+    image: ${IMAGE_PREFIX}-frontend:${TAG}
     expose: ["80"]
     networks: ["proxy-net"]
     labels:
@@ -21,7 +21,7 @@ services:
       start_period: 15s
 
   jwt-backend:
-    image: ${IMAGE_PREFIX}-backend:${TAG:-latest}
+    image: ${IMAGE_PREFIX}-backend:${TAG}
     expose: ["8080"]
     networks: ["proxy-net"]
     labels:
